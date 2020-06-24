@@ -3,7 +3,6 @@
 ## Setting up a Raspberry Pi as an access point in a standalone network
 
 ## TODO
-- Double check with fresh installation
 - Remove redundant commands
 - Add better explanations
 - Add further details/ links
@@ -15,7 +14,7 @@
 Use the following to update your Raspbian installation:
 ```
 sudo apt-get update
-sudo apt-get dist-upgrade
+sudo apt-get full-upgrade
 ```
 Install all the required software in one go with this command: 
 ```
@@ -23,8 +22,7 @@ sudo apt-get install dnsmasq hostapd
 ```
 Since the configuration files are not ready yet, turn the new software off as follows: 
 ```
-sudo systemctl stop dnsmasq
-sudo systemctl stop hostapd
+sudo systemctl stop dnsmasq hostapd
 ```
 
 ### Configuring a static IP
@@ -44,12 +42,6 @@ Add
 interface wlan0
   static ip_address=192.168.4.1/24
   nohook wpa_supplicant
-```
-
-Now restart the dhcpcd daemon and set up the new `wlan0` configuration:
-
-```
-sudo service dhcpcd restart
 ```
 
 ### Configuring the DHCP server (dnsmasq)
@@ -91,7 +83,6 @@ Note that the name and password should **not** have quotes around them, and shou
 ```
 country_code=GB
 interface=wlan0
-driver=nl80211
 ssid=NameOfNetwork
 hw_mode=g
 channel=7
@@ -123,11 +114,11 @@ DAEMON_CONF="/etc/hostapd/hostapd.conf"
 
 ### Start it up
 
-Now start up the remaining services:
+Now restart the services:
 
 ```
+sudo service dhcpcd restart
 sudo systemctl unmask hostapd
-sudo systemctl enable hostapd
 sudo service hostapd start  
 sudo service dnsmasq start  
 ```
@@ -142,6 +133,7 @@ ssh pi@192.168.4.1
 
 By this point, the Raspberry Pi is acting as an access point, and other devices can associate with it. 
 Associated devices can access the Raspberry Pi access point via its IP address for operations such as `rsync`, `scp`, or `ssh`.
+However, the internet access has not been configured
 
 
 ## Using the Raspberry Pi as an access point to share an internet connection
