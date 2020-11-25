@@ -1,43 +1,60 @@
 # rpi-access-point-no-bridge
 
+This is a step-by-step guide to setup an access point using your pi. The pi is connected to the internet via ethernet, and is broadcasting the acess point over wifi.
+
+I am by no means an expert - in fact I did a lot of research from multiple sources - this document is a culmination of what worked for my RPi 3B+.
+
+## Other Solutions
+
+- Below is a list of sites that I tried and the possible reason why it failed:
+  - [thepi.io: How to use your raspberry pi as a wireless access point](https://thepi.io/how-to-use-your-raspberry-pi-as-a-wireless-access-point/)
+  - [rpi official: Setting up a Raspberry Pi as a routed wireless access point](https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md)
+  - [sparkfun: Setting up a Raspberry Pi 3 as an Access Point](https://learn.sparkfun.com/tutorials/setting-up-a-raspberry-pi-3-as-an-access-point/all) - Uses hotplug which is outdated
+  - [SurferTim GitHub post: Setting up a Raspberry Pi as an access point in a standalone network](https://github.com/SurferTim/documentation/blob/6bc583965254fa292a470990c40b145f553f6b34/configuration/wireless/access-point.md)
+
+- Below are a list of solutions that I have yet to try, but seem good:
+  - [RaspAP](https://raspap.com/). Haven't used it, but it seems to be a community wide solution(?)
+  - [Pi AP](https://github.com/f1linux/pi-ap). Haven't used it, but it has more details about debugging and provides a modular approach
+
+## ToDo
+
+- [ ] Try creating an [alias](https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md) to ssh into the pi e.g. `address=/gw.wlan/192.168.4.1`
+- [ ] Try setting up [RaspAP with PiHole](https://discourse.pi-hole.net/t/raspap-pihole/14739)
+- [ ] Add common mistakes and how to debug issues - the most usefult terminal commands were: `sudo reboot` and `journalctl -xe`
+- [x] Remove redundant commands
+- [x] Add better explanations
+- [x] Add further details/ links
+- [x] Add sources
+
 ## Setting up a Raspberry Pi as an access point in a standalone network
-
-## TODO
-- Remove redundant commands
-- Add better explanations
-- Add further details/ links
-- Add sources
-- Add common mistakes and how to debug issues
-
 ### Setup
 
-Use the following to update your Raspbian installation:
+Use the following to [update](https://www.raspberrypi.org/documentation/raspbian/updating.mdhttps://www.raspberrypi.org/documentation/raspbian/updating.md) your Raspbian installation:
 ```
-sudo apt-get update
-sudo apt-get full-upgrade
+sudo apt update
+sudo apt full-upgrade
 ```
-Install all the required software in one go with this command: 
+Install all the required software:
 ```
 sudo apt-get install dnsmasq hostapd
 ```
-Since the configuration files are not ready yet, turn the new software off as follows: 
+Since the configuration files are not ready yet, turn the new software off:
 ```
 sudo systemctl stop dnsmasq hostapd
 ```
 
 ### Configuring a static IP
 
-We are configuring a standalone network to act as a server, so the Raspberry Pi needs to have a static IP address assigned to the wireless port. 
+The Raspberry Pi needs to have a static IP address, so that connected devices know where the server is.
 This documentation assumes that we are using the standard 192.168.x.x IP addresses for our wireless network, so we will assign the server the IP address 192.168.4.1. 
-It is also assumed that the wireless device being used is `wlan0`.
-
-First, the standard interface handling for `wlan0` needs to be disabled. Normally the dhcpcd daemon (DHCP client) will search the network for a DHCP server to assign a IP address to `wlan0`. This is disabled by editing the configuration file:
+The `4` is arbitrary, but has been set to an unused set of addresses.
+It is also assumed that the wireless device being used is `wlan0` (which can be check using `ifconfig`). Normally the dhcpcd daemon (DHCP client) will search the network for a DHCP server to assign a IP address to `wlan0`. This is disabled by editing the configuration file:
 
 ```
 sudo nano /etc/dhcpcd.conf
 ```
 
-Add 
+Add
 ```
 interface wlan0
   static ip_address=192.168.4.1/24
@@ -55,7 +72,7 @@ sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
 sudo nano /etc/dnsmasq.conf
 ```
 
-Type or copy the following information into the dnsmasq configuration file and save it:
+Add the following and save it:
 
 ```
 interface=wlan0      # Use the require wireless interface - usually wlan0
@@ -63,13 +80,11 @@ interface=wlan0      # Use the require wireless interface - usually wlan0
 ```
 
 So for `wlan0`, we are going to provide IP addresses between 192.168.4.2 and 192.168.4.20, with a lease time of 24 hours. 
-If you are providing DHCP services for other network devices (e.g. eth0), you could add more sections with the appropriate interface header, 
-with the range of addresses you intend to provide to that interface.
-There are many more options for dnsmasq; see the [dnsmasq documentation](http://www.thekelleys.org.uk/dnsmasq/doc.html) for more details.
+There are many more options for [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/doc.html).
 
 ### Configuring the access point host software (hostapd)
 
-You need to edit the hostapd configuration file, located at /etc/hostapd/hostapd.conf, to add the various parameters for your wireless network. 
+You need to edit the hostapd configuration file to add the various parameters for your wireless network. 
 After initial install, this will be a new/empty file.
 
 ```
@@ -77,13 +92,14 @@ sudo nano /etc/hostapd/hostapd.conf
 ```
 
 Add the information below to the configuration file. 
-This configuration assumes we are using channel 7, with a network name of NameOfNetwork, and a password AardvarkBadgerHedgehog. 
+This configuration assumes we are using channel `7`, with a network name of `pi`, and a password `RasPI@AP`.
+To setup a 5 Ghz connection, the model should be a pi 3B + or above. Make sure to change the channel and hw_mode
 Note that the name and password should **not** have quotes around them, and should have a minimum of 8 characters.
 
 ```
 country_code=GB
 interface=wlan0
-ssid=NameOfNetwork
+ssid=pi
 hw_mode=g
 channel=7
 wmm_enabled=0
@@ -91,14 +107,11 @@ macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 wpa=2
-wpa_passphrase=AardvarkBadgerHedgehog
+wpa_passphrase=RasPI@AP
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP
 ```
-
-To setup a 5 Ghz connection, the model should be a pi 3B + or above. Make sure to change the channel and hw_mode
-
 
 We now need to tell the system where to find this configuration file.
 
@@ -106,7 +119,7 @@ We now need to tell the system where to find this configuration file.
 sudo nano /etc/default/hostapd
 ```
 
-Find the line with #DAEMON_CONF, and replace it with this:
+Find the line with `#DAEMON_CONF`, and replace it with this:
 
 ```
 DAEMON_CONF="/etc/hostapd/hostapd.conf"
@@ -123,17 +136,9 @@ sudo service hostapd start
 sudo service dnsmasq start  
 ```
 
-Using a wireless device, search for networks. The network SSID you specified in the hostapd configuration should now be present, and it should be accessible with the specified password.
-
-If SSH is enabled on the Raspberry Pi access point, connect to it using the `pi` account:
-
-```
-ssh pi@192.168.4.1
-```
-
-By this point, the Raspberry Pi is acting as an access point, and other devices can associate with it. 
-Associated devices can access the Raspberry Pi access point via its IP address for operations such as `rsync`, `scp`, or `ssh`.
-However, the internet access has not been configured
+The network should now be broadcasting from the Raspberry Pi with the SSID and password sepcified, and other devices can connect to it.
+Connected devices can access the Raspberry Pi access point via its IP address for operations such as `rsync`, `scp`, or `ssh pi@192.168.4.1`.
+However, internet access has not been configured.
 
 
 ## Using the Raspberry Pi as an access point to share an internet connection
