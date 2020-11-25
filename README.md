@@ -1,6 +1,6 @@
 # rpi-access-point-no-bridge
 
-This is a step-by-step guide to setup an access point using your pi. The pi is connected to the internet via ethernet, and is broadcasting the acess point over wifi.
+This is a guide to setup an access point on your Raspberry Pi. The pi is connected to the internet via ethernet and is broadcasting the access point over wifi.
 
 I am by no means an expert - in fact I did a lot of research from multiple sources - this document is a culmination of what worked for my RPi 3B+.
 
