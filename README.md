@@ -1,4 +1,10 @@
-# rpi-access-point-no-bridge
+# RPi access point no bridge
+
+Please note that I am now using [RaspAP](https://raspap.com/). The setup was a bit dodgy because i had issues with the quick install the first two times, but it ended up working on the third try.
+
+---
+
+## Guide
 
 This is a guide to setup an access point on your Raspberry Pi. The pi is connected to the internet via ethernet and is broadcasting the access point over wifi.
 
